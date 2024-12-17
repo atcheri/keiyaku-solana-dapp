@@ -181,11 +181,11 @@ pub struct ClaimTokens<'info> {
     pub employee_account: Account<'info, EmployeeAccount>,
 
     #[account(
-        mut, 
-        seeds = [b"vesting_treasury", company_name.as_bytes()],
+        mut,
+        seeds = [company_name.as_ref()],
         bump = vesting_account.bump,
         has_one = treasury_token_account,
-        has_one = mint,
+        has_one = mint
     )]
     pub vesting_account: Account<'info, VestingAccount>,
 
