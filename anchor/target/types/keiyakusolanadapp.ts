@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/keiyakusolanadapp.json`.
  */
 export type Keiyakusolanadapp = {
-  "address": "coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF",
+  "address": "B1v18CkGUhUw47k2XiYYceeJ5Hri6xA75uGCofNrrr1k",
   "metadata": {
     "name": "keiyakusolanadapp",
     "version": "0.1.0",

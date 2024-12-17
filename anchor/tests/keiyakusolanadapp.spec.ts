@@ -134,7 +134,7 @@ describe("keiyaku-solana-dapp", () => {
     ).resolves.toBeDefined();
   });
 
-  it("claims the employee's vested tokens", async () => {
+  it("claims the employee's vested tokens, but not twice in a row", async () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const currentClock = await banksClient.getClock();
@@ -154,5 +154,11 @@ describe("keiyaku-solana-dapp", () => {
         .accounts({ tokenProgram: TOKEN_PROGRAM_ID })
         .rpc({ commitment: "confirmed" })
     ).resolves.toBeDefined();
+    await expect(
+      program2.methods
+        .claimTokens(testCompanyName)
+        .accounts({ tokenProgram: TOKEN_PROGRAM_ID })
+        .rpc({ commitment: "confirmed" })
+    ).rejects.toThrow("Nothing to claim");
   });
 });
