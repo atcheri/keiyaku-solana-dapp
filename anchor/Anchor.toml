@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-keiyakusolanadapp = "coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF"
+keiyakusolanadapp = "B1v18CkGUhUw47k2XiYYceeJ5Hri6xA75uGCofNrrr1k"
 
 [registry]
 url = "https://api.apr.dev"
