@@ -1,5 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
+import { BN, Program } from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { startAnchor, ProgramTestContext, BanksClient } from "solana-bankrun";
 import { BankrunProvider } from "anchor-bankrun";
@@ -110,6 +110,22 @@ describe("keiyaku-solana-dapp", () => {
         employer,
         amount
       )
+    ).resolves.toBeDefined();
+  });
+
+  it("creates an employee vesting account", async () => {
+    const startTime = new BN(0);
+    const endTime = new BN(100);
+    const totalAmount = new BN(100);
+    const cliffTime = new BN(0);
+    await expect(
+      program.methods
+        .createEmployee(startTime, endTime, totalAmount, cliffTime)
+        .accounts({
+          beneficiary: beneficiary.publicKey,
+          vestingAccount: vestingAccountKey,
+        })
+        .rpc({ commitment: "confirmed", skipPreflight: true })
     ).resolves.toBeDefined();
   });
 });
