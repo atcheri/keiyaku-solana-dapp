@@ -1,76 +1,85 @@
-import * as anchor from '@coral-xyz/anchor'
-import {Program} from '@coral-xyz/anchor'
-import {Keypair} from '@solana/web3.js'
-import {Keiyakusolanadapp} from '../target/types/keiyakusolanadapp'
+import * as anchor from "@coral-xyz/anchor";
+import { Program } from "@coral-xyz/anchor";
+import { Keypair, PublicKey } from "@solana/web3.js";
+import { startAnchor, ProgramTestContext, BanksClient } from "solana-bankrun";
+import { BankrunProvider } from "anchor-bankrun";
+import { Keiyakusolanadapp } from "../target/types/keiyakusolanadapp";
+import IDL from "../target/idl/keiyakusolanadapp.json";
+import { SYSTEM_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/native/system";
+import { createMint } from "@solana/spl-token";
+import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 
-describe('keiyakusolanadapp', () => {
-  // Configure the client to use the local cluster.
-  const provider = anchor.AnchorProvider.env()
-  anchor.setProvider(provider)
-  const payer = provider.wallet as anchor.Wallet
+describe("keiyaku-solana-dapp", () => {
+  const testCompanyName = "test company name";
+  let beneficiary: Keypair;
+  let context: ProgramTestContext;
+  let provider: BankrunProvider;
+  let program: Program<Keiyakusolanadapp>;
+  let banksClient: BanksClient;
+  let employer: Keypair;
+  let mint: PublicKey;
+  let beneficiaryProvider: BankrunProvider;
+  let program2: Program<Keiyakusolanadapp>;
+  let vestingAccountKey: PublicKey;
+  let treasuryTokenAccount: PublicKey;
+  let employeeAccount: PublicKey;
 
-  const program = anchor.workspace.Keiyakusolanadapp as Program<Keiyakusolanadapp>
+  beforeAll(async () => {
+    beneficiary = new anchor.web3.Keypair();
+    context = await startAnchor(
+      "",
+      [
+        {
+          name: "keiyakusolanadapp",
+          programId: new PublicKey(IDL.address),
+        },
+      ],
+      [
+        {
+          address: beneficiary.publicKey,
+          info: {
+            lamports: 1_000_000_000,
+            data: Buffer.alloc(0),
+            owner: SYSTEM_PROGRAM_ID,
+            executable: false,
+          },
+        },
+      ]
+    );
+    provider = new BankrunProvider(context);
+    anchor.setProvider(provider);
+    program = new Program<Keiyakusolanadapp>(
+      IDL as Keiyakusolanadapp,
+      provider
+    );
+    banksClient = context.banksClient;
+    employer = provider.wallet.payer;
+    // @ts-ignore-error - Type error in spl-token-bankrun dependency
+    mint = await createMint(banksClient, employer, employer.publicKey, null, 2);
 
-  const keiyakusolanadappKeypair = Keypair.generate()
+    beneficiaryProvider = new BankrunProvider(context);
+    beneficiaryProvider.wallet = new NodeWallet(beneficiary);
 
-  it('Initialize Keiyakusolanadapp', async () => {
-    await program.methods
-      .initialize()
-      .accounts({
-        keiyakusolanadapp: keiyakusolanadappKeypair.publicKey,
-        payer: payer.publicKey,
-      })
-      .signers([keiyakusolanadappKeypair])
-      .rpc()
+    program2 = new Program<Keiyakusolanadapp>(
+      IDL as Keiyakusolanadapp,
+      beneficiaryProvider
+    );
 
-    const currentCount = await program.account.keiyakusolanadapp.fetch(keiyakusolanadappKeypair.publicKey)
-
-    expect(currentCount.count).toEqual(0)
-  })
-
-  it('Increment Keiyakusolanadapp', async () => {
-    await program.methods.increment().accounts({ keiyakusolanadapp: keiyakusolanadappKeypair.publicKey }).rpc()
-
-    const currentCount = await program.account.keiyakusolanadapp.fetch(keiyakusolanadappKeypair.publicKey)
-
-    expect(currentCount.count).toEqual(1)
-  })
-
-  it('Increment Keiyakusolanadapp Again', async () => {
-    await program.methods.increment().accounts({ keiyakusolanadapp: keiyakusolanadappKeypair.publicKey }).rpc()
-
-    const currentCount = await program.account.keiyakusolanadapp.fetch(keiyakusolanadappKeypair.publicKey)
-
-    expect(currentCount.count).toEqual(2)
-  })
-
-  it('Decrement Keiyakusolanadapp', async () => {
-    await program.methods.decrement().accounts({ keiyakusolanadapp: keiyakusolanadappKeypair.publicKey }).rpc()
-
-    const currentCount = await program.account.keiyakusolanadapp.fetch(keiyakusolanadappKeypair.publicKey)
-
-    expect(currentCount.count).toEqual(1)
-  })
-
-  it('Set keiyakusolanadapp value', async () => {
-    await program.methods.set(42).accounts({ keiyakusolanadapp: keiyakusolanadappKeypair.publicKey }).rpc()
-
-    const currentCount = await program.account.keiyakusolanadapp.fetch(keiyakusolanadappKeypair.publicKey)
-
-    expect(currentCount.count).toEqual(42)
-  })
-
-  it('Set close the keiyakusolanadapp account', async () => {
-    await program.methods
-      .close()
-      .accounts({
-        payer: payer.publicKey,
-        keiyakusolanadapp: keiyakusolanadappKeypair.publicKey,
-      })
-      .rpc()
-
-    // The account should no longer exist, returning null.
-    const userAccount = await program.account.keiyakusolanadapp.fetchNullable(keiyakusolanadappKeypair.publicKey)
-    expect(userAccount).toBeNull()
-  })
-})
+    [vestingAccountKey] = PublicKey.findProgramAddressSync(
+      [Buffer.from(testCompanyName)],
+      program.programId
+    );
+    [treasuryTokenAccount] = PublicKey.findProgramAddressSync(
+      [Buffer.from("vesting_treasury"), Buffer.from(testCompanyName)],
+      program.programId
+    );
+    [employeeAccount] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("employee_vesting"),
+        beneficiary.publicKey.toBuffer(),
+        vestingAccountKey.toBuffer(),
+      ],
+      program.programId
+    );
+  });
+});
