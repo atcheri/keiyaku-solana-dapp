@@ -1,7 +1,12 @@
 import * as anchor from "@coral-xyz/anchor";
 import { BN, Program } from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { startAnchor, ProgramTestContext, BanksClient } from "solana-bankrun";
+import {
+  startAnchor,
+  ProgramTestContext,
+  BanksClient,
+  Clock,
+} from "solana-bankrun";
 import { BankrunProvider } from "anchor-bankrun";
 import { Keiyakusolanadapp } from "../target/types/keiyakusolanadapp";
 import IDL from "../target/idl/keiyakusolanadapp.json";
@@ -126,6 +131,28 @@ describe("keiyaku-solana-dapp", () => {
           vestingAccount: vestingAccountKey,
         })
         .rpc({ commitment: "confirmed", skipPreflight: true })
+    ).resolves.toBeDefined();
+  });
+
+  it("claims the employee's vested tokens", async () => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const currentClock = await banksClient.getClock();
+    context.setClock(
+      new Clock(
+        currentClock.slot,
+        currentClock.epochStartTimestamp,
+        currentClock.epoch,
+        currentClock.leaderScheduleEpoch,
+        BigInt(1000)
+      )
+    );
+
+    await expect(
+      program2.methods
+        .claimTokens(testCompanyName)
+        .accounts({ tokenProgram: TOKEN_PROGRAM_ID })
+        .rpc({ commitment: "confirmed" })
     ).resolves.toBeDefined();
   });
 });
