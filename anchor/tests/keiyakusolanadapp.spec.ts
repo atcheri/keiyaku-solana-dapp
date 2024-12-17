@@ -6,8 +6,10 @@ import { BankrunProvider } from "anchor-bankrun";
 import { Keiyakusolanadapp } from "../target/types/keiyakusolanadapp";
 import IDL from "../target/idl/keiyakusolanadapp.json";
 import { SYSTEM_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/native/system";
-import { createMint } from "@solana/spl-token";
+// @ts-ignore:next-line
+import { createMint } from "spl-token-bankrun";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
+import { TOKEN_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
 
 describe("keiyaku-solana-dapp", () => {
   const testCompanyName = "test company name";
@@ -81,5 +83,18 @@ describe("keiyaku-solana-dapp", () => {
       ],
       program.programId
     );
+  });
+
+  it("creates a vesting account", async () => {
+    await expect(
+      program.methods
+        .createVestingAccount(testCompanyName)
+        .accounts({
+          signer: employer.publicKey,
+          mint,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc({ commitment: "confirmed" })
+    ).resolves.toBeDefined();
   });
 });
