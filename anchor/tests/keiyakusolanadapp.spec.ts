@@ -7,7 +7,7 @@ import { Keiyakusolanadapp } from "../target/types/keiyakusolanadapp";
 import IDL from "../target/idl/keiyakusolanadapp.json";
 import { SYSTEM_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/native/system";
 // @ts-ignore:next-line
-import { createMint } from "spl-token-bankrun";
+import { createMint, mintTo } from "spl-token-bankrun";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 import { TOKEN_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
 
@@ -95,6 +95,21 @@ describe("keiyaku-solana-dapp", () => {
           tokenProgram: TOKEN_PROGRAM_ID,
         })
         .rpc({ commitment: "confirmed" })
+    ).resolves.toBeDefined();
+  });
+
+  it("funds the treasury token account", async () => {
+    const amount = 10_000 * 10 ** 9;
+
+    await expect(
+      mintTo(
+        banksClient,
+        employer,
+        mint,
+        treasuryTokenAccount,
+        employer,
+        amount
+      )
     ).resolves.toBeDefined();
   });
 });
