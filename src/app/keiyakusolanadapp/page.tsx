@@ -1,5 +1,5 @@
-import KeiyakusolanadappFeature from '@/components/keiyakusolanadapp/keiyakusolanadapp-feature'
+import KeiyakusolanadappFeature from "@/components/keiyakusolanadapp/app-feature";
 
 export default function Page() {
-  return <KeiyakusolanadappFeature />
+  return <KeiyakusolanadappFeature />;
 }
